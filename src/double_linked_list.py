@@ -68,7 +68,7 @@ class DoublyLinkedList:
                 break
             temp = temp.next
         if temp is None:
-            print("{} is not present in the linked list. {} cannot be inserted into the list.".format(element, value))
+            print("{} is not present in the linked list. {} cannot be inserted into the list.".format(element, str(kwargs)))
         else:
             new_node = Node(id, **kwargs)
             new_node.next = temp.next
