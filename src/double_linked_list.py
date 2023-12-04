@@ -1,10 +1,9 @@
 class Node:
-    def __init__(self, trid, mode, status):
+    def __init__(self, id, **kwargs):
         self.previous = None
         self.next = None
-        self.trid = trid
-        self.mode = mode
-        self.status = status
+        self.id = id
+        self.arguments = kwargs
 
 
 class DoublyLinkedList:
@@ -32,18 +31,18 @@ class DoublyLinkedList:
             count += 1
         return temp
 
-    def search(self, trid):
+    def search(self, id):
         temp = self.head
         isFound = False
         while temp is not None:
-            if temp.trid == trid:
+            if temp.id == id:
                 isFound = True
                 break
             temp = temp.next
         return isFound
 
-    def insertAtBeginning(self, trid, mode, status):
-        new_node = Node(trid, mode, status)
+    def insertAtBeginning(self, id, **kwargs):
+        new_node = Node(id, **kwargs)
         if self.isEmpty():
             self.head = new_node
         else:
@@ -51,10 +50,10 @@ class DoublyLinkedList:
             self.head.previous = new_node
             self.head = new_node
 
-    def insertAtEnd(self, trid, mode, status):
-        new_node = Node(trid, mode, status)
+    def insertAtEnd(self, id, **kwargs):
+        new_node = Node(id, **kwargs)
         if self.isEmpty():
-            self.insertAtBeginning(trid, mode, status)
+            self.insertAtBeginning(id, **kwargs)
         else:
             temp = self.head
             while temp.next is not None:
@@ -62,22 +61,22 @@ class DoublyLinkedList:
             temp.next = new_node
             new_node.previous = temp
 
-    def insertAfterElement(self, trid, mode, status, element):
+    def insertAfterElement(self, id, element, **kwargs):
         temp = self.head
         while temp is not None:
-            if temp.trid == element:
+            if temp.id == element:
                 break
             temp = temp.next
         if temp is None:
             print("{} is not present in the linked list. {} cannot be inserted into the list.".format(element, value))
         else:
-            new_node = Node(trid, mode, status)
+            new_node = Node(id, **kwargs)
             new_node.next = temp.next
             new_node.previous = temp
             temp.next.previous = new_node
             temp.next = new_node
 
-    def insertAtPosition(self, trid, mode, status, position):
+    def insertAtPosition(self, id, position, **kwargs):
         temp = self.head
         count = 0
         while temp is not None:
@@ -86,14 +85,14 @@ class DoublyLinkedList:
             count += 1
             temp = temp.next
         if position == 1:
-            self.insertAtBeginning(trid, mode, status)
+            self.insertAtBeginning(id, **kwargs)
         elif temp is None:
             print("There are less than {}-1 elements in the linked list. Cannot insert at {} position.".format(position,
                                                                                                                position))
         elif temp.next is None:
-            self.insertAtEnd(trid, mode, status)
+            self.insertAtEnd(id, **kwargs)
         else:
-            new_node = Node(trid, mode, status)
+            new_node = Node(id, **kwargs)
             new_node.next = temp.next
             new_node.previous = temp
             temp.next.previous = new_node
@@ -101,18 +100,18 @@ class DoublyLinkedList:
 
     def printLinkedList(self):
         temp = self.head
-        trids = []
+        ids = []
         while temp is not None:
-            trids.append(temp.trid)
+            ids.append((temp.id, temp.arguments))
             temp = temp.next
-        print(*trids, sep=", ")
+        print(*ids, sep=", ")
 
-    def updateElement(self, old_value, new_value):
+    def updateElement(self, id, **kwargs):
         temp = self.head
         isUpdated = False
         while temp is not None:
-            if temp.status == old_value:
-                temp.status = new_value
+            if temp.id == id:
+                temp.arguments = kwargs
                 isUpdated = True
             temp = temp.next
         if isUpdated:
@@ -120,7 +119,7 @@ class DoublyLinkedList:
         else:
             print("Value not Updated in the linked list")
 
-    def updateAtPosition(self, status, position):
+    def updateAtPosition(self, position, **kwargs):
         temp = self.head
         count = 0
         while temp is not None:
@@ -131,7 +130,7 @@ class DoublyLinkedList:
         if temp is None:
             print("Less than {} elements in the linked list. Cannot update.".format(position))
         else:
-            temp.status = status
+            temp.arguments = kwargs
             print("Value updated at position {}".format(position))
 
     def deleteFromBeginning(self):
@@ -155,16 +154,16 @@ class DoublyLinkedList:
             temp.previous.next = None
             temp.previous = None
 
-    def delete(self, trid):
+    def delete(self, id):
         if self.isEmpty():
             print("Linked List is empty. Cannot delete elements.")
         elif self.head.next is None:
-            if self.head.trid == trid:
+            if self.head.id == id:
                 self.head = None
         else:
             temp = self.head
             while temp is not None:
-                if temp.trid == trid:
+                if temp.id == id:
                     break
                 temp = temp.next
             if temp is None:
@@ -201,20 +200,20 @@ class DoublyLinkedList:
 
 # x = DoublyLinkedList()
 # print(x.isEmpty())
-# x.insertAtBeginning(0, "X", "granted")
+# x.insertAtBeginning(0, mode="X", status="granted")
 # print("0--------")
 # x.printLinkedList()
-# x.insertAtEnd(1, "S", "blocked")
+# x.insertAtEnd(1, mode="S", status="blocked")
 # print("0, 1--------")
 # x.printLinkedList()
 # x.deleteFromLast()
 # print("0--------")
 # x.printLinkedList()
-# x.insertAtEnd(2, "S", "blocked")
+# x.insertAtEnd(2, mode="S", status="blocked")
 # print("0, 2--------")
 # x.printLinkedList()
 # x.deleteFromLast()
 # x.deleteFromBeginning()
-# x.insertAtEnd(3, "X", "granted")
+# x.insertAtEnd(3, mode="X", status="granted")
 # print("3--------")
 # x.printLinkedList()
