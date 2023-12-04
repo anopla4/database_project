@@ -5,6 +5,10 @@ class Node:
         self.id = id
         self.arguments = kwargs
 
+    def __str__(self) -> str:
+        args_str = '\n'.join([f'{arg}: {str(self.arguments[arg])}' for arg in self.arguments])
+        return f"{self.id}:\n{args_str}"
+
 
 class DoublyLinkedList:
     def __init__(self):
@@ -102,10 +106,7 @@ class DoublyLinkedList:
         temp = self.head
         ids = []
         while temp is not None:
-            temp_str = str(temp.id)
-            a = "\n"
-            args_str = '\n'.join([f'{arg}:{a}{str(temp.arguments[arg])}' for arg in temp.arguments])
-            ids.append(f"{temp_str}, {args_str}")
+            ids.append(str(temp))
             temp = temp.next
         return "\n".join(ids) if len(ids) else ""
 
@@ -173,6 +174,8 @@ class DoublyLinkedList:
                 print("Element not present in linked list. Cannot delete element.")
             elif temp.next is None:
                 self.deleteFromLast()
+            elif temp.previous is None:
+                self.deleteFromBeginning()
             else:
                 temp.next = temp.previous.next
                 temp.next.previous = temp.previous
