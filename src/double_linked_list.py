@@ -39,7 +39,7 @@ class DoublyLinkedList:
                 isFound = True
                 break
             temp = temp.next
-        return isFound
+        return isFound, temp
 
     def insertAtBeginning(self, id, **kwargs):
         new_node = Node(id, **kwargs)
@@ -98,13 +98,16 @@ class DoublyLinkedList:
             temp.next.previous = new_node
             temp.next = new_node
 
-    def printLinkedList(self):
+    def __str__(self):
         temp = self.head
         ids = []
         while temp is not None:
-            ids.append((temp.id, temp.arguments))
+            temp_str = str(temp.id)
+            a = "\n"
+            args_str = '\n'.join([f'{arg}:{a}{str(temp.arguments[arg])}' for arg in temp.arguments])
+            ids.append(f"{temp_str}, {args_str}")
             temp = temp.next
-        print(*ids, sep=", ")
+        return "\n".join(ids) if len(ids) else ""
 
     def updateElement(self, id, **kwargs):
         temp = self.head
@@ -202,18 +205,18 @@ class DoublyLinkedList:
 # print(x.isEmpty())
 # x.insertAtBeginning(0, mode="X", status="granted")
 # print("0--------")
-# x.printLinkedList()
+# print(x)
 # x.insertAtEnd(1, mode="S", status="blocked")
 # print("0, 1--------")
-# x.printLinkedList()
+# print(x)
 # x.deleteFromLast()
 # print("0--------")
-# x.printLinkedList()
+# print(x)
 # x.insertAtEnd(2, mode="S", status="blocked")
 # print("0, 2--------")
-# x.printLinkedList()
+# print(x)
 # x.deleteFromLast()
 # x.deleteFromBeginning()
 # x.insertAtEnd(3, mode="X", status="granted")
 # print("3--------")
-# x.printLinkedList()
+# print(x)
