@@ -1,8 +1,9 @@
 from random import randint
 from utils import generate_discrete_var
-from transaction import Transaction
-from log_manager import LogManager, StartRecord, OperationRecord, RollbackRecord
+from transaction import Transaction, ACTIVE, BLOCKED, TERMINATED
+from log_manager import LogManager, StartRecord, OperationRecord, RollbackRecord, CommitRecord
 from recovery_manager import RecoveryManager
+from lock_manager import LockManager, SHARED
 import json
 
 class Simulation():
@@ -33,6 +34,8 @@ class Simulation():
         self.log_manager = LogManager()
         # recovery manager
         self.recovery_manager = RecoveryManager()
+        # lock manager
+        self.lock_manager = LockManager()
         # data
         self.data = []
 
@@ -63,12 +66,53 @@ class Simulation():
         with open(db_path) as fp:
             self.data = fp.read().split()
 
-    def perform_write(self):
-        pass
+    def update_data(self):
+        db_path = ""
+        with open("src\config.json") as fp:
+            db_path = json.load(fp)["db_loc"]
+        
+        with open(db_path) as fp:
+            fp.write(" ".join(self.data))
 
-    def perform_rollback():
-        pass
+    def perform_write(self, data_id, trid):
+        is_lock_granted = self.lock_manager.request_lock(data_id, trid)
 
+        if is_lock_granted:
+            self.data[data_id] ^= 1
+        else:
+            self.transactions[trid].state = BLOCKED
+
+    def perform_read(self, data_id, trid):
+        is_lock_granted = self.lock_manager.request_lock(data_id, trid, mode=SHARED)
+
+        if not is_lock_granted:
+            self.transactions[trid].state = BLOCKED
+
+    def perform_rollback(self, trid):
+        self.recovery_manager.rollback_transaction(self.data, self.log_manager, trid)
+        self.log_manager.add_record(RollbackRecord(trid))
+
+        # TODO: write logs to disk
+        self.log_manager.write_to_disk()
+        self.log_manager.flush_records()
+
+        self.lock_manager.release_locks(trid)
+
+    def perform_commit(self, trid):
+        self.log_manager.add_record(CommitRecord(trid))
+        # TODO: write logs to disk
+        self.log_manager.write_to_disk()
+        self.log_manager.flush_records()
+
+        self.lock_manager.release_locks(trid)
+
+    def perform_operation(self, op, data_id, trid):
+        # write
+        if op == 1:
+            self.perform_write(data_id, trid)
+        # rollback
+        else:
+            self.perform_rollback(trid)
 
     def start(self):
         i = 0
@@ -76,6 +120,12 @@ class Simulation():
         self.log_manager.read_from_disk()
         self.recovery_manager.recover(self.data, self.log_manager)
         while i < self.cycles:
+            # update database every 25 cycles (first cycle ignored since database was just read)
+            if i > 0 and i % 25 == 0:
+                self.log_manager.write_to_disk()
+                self.log_manager.flush_records()
+                self.update_data()
+
             # start transaction
             if self.start_transaction():
                 id_ = len(self.transactions)
@@ -85,12 +135,43 @@ class Simulation():
                 self.log_manager.add_record(StartRecord(id_))
 
             # execute active transactions
-            for act_tran in self.active_transactions:
-                op, data_id, old_value = self.get_operation()
-                if op:
-                    self.log_manager.add_record(self.get_record(op, act_tran, data_id, old_value))
+            for trid in self.transactions:
+                transaction  = self.transactions[trid]
+                state = transaction.state
+
+                # terminate transaction that reached the maximum number of operations
+                if transaction.operations_submitted == self.transaction_size:
+                    self.perform_commit(trid)
+                    transaction.state = TERMINATED
+                    continue
+
+                # rollback transaction in deadlock
+                if transaction.cycles_in_execution == self.timeout:
+                    self.perform_rollback(trid)
+                    transaction.state = TERMINATED
+                    continue
+                
+                # increase number of cycles the transaction has been executing
+                transaction.cycles_in_execution += 1
+                
+                if state == ACTIVE:
+                    op, data_id, old_value = self.get_operation()
+                    if op:
+                        # write log record
+                        self.log_manager.add_record(self.get_record(op, trid, data_id, old_value))
+
+                        # perform operation
+                        self.perform_operation(op, data_id, trid)
+                        # increase number of transaction submitted operations
+                        transaction.operations_submitted += 1
+
+            # unblock transactions
+            for trid in self.transactions:
+                transaction  = self.transactions[trid]
+                if transaction.state == BLOCKED and not self.lock_manager.is_blocked(trid):
+                    transaction.state = ACTIVE
 
             i += 1
-
-        self.log_manager.write_to_disk()
+            self.log_manager.write_to_disk()
+        # TODO: no writing to disk
 
