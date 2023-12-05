@@ -38,6 +38,8 @@ class Simulation():
         self.lock_manager = LockManager()
         # data
         self.data = []
+        # number of write operations
+        self.write_operations = 0
 
     def validate_args(self):
         pass
@@ -56,7 +58,7 @@ class Simulation():
         return var, None, None
     
     def get_record(self, op, trid, data_id, old_value):
-        return OperationRecord(trid, data_id, old_value) if op == 1 else RollbackRecord(trid)
+        return OperationRecord(trid, data_id, old_value, old_value ^ 1) if op == 1 else RollbackRecord(trid)
     
     def load_data(self):
         db_path = ""
@@ -75,6 +77,7 @@ class Simulation():
             fp.write(" ".join(self.data))
 
     def perform_write(self, data_id, trid):
+        self.write_operations += 1
         is_lock_granted = self.lock_manager.request_lock(data_id, trid)
 
         if is_lock_granted:
@@ -119,9 +122,10 @@ class Simulation():
         self.load_data()
         self.log_manager.read_from_disk()
         self.recovery_manager.recover(self.data, self.log_manager)
+        # TODO: update database
         while i < self.cycles:
             # update database every 25 cycles (first cycle ignored since database was just read)
-            if i > 0 and i % 25 == 0:
+            if self.write_operations > 0 and self.write_operations % 25 == 0:
                 self.log_manager.write_to_disk()
                 self.log_manager.flush_records()
                 self.update_data()
