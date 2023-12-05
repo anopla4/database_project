@@ -1,6 +1,9 @@
+ACTIVE = "active"
+BLOCKED = "blocked"
 class Transaction():
     def __init__(self, id_) -> None:
         self.id = id_
+        self.state = ACTIVE
 
 class Operation():
     def __init__(self, tran_id) -> None:
