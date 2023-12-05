@@ -1,9 +1,12 @@
 ACTIVE = "active"
 BLOCKED = "blocked"
+TERMINATED = "terminated"
 class Transaction():
     def __init__(self, id_) -> None:
         self.id = id_
         self.state = ACTIVE
+        self.operations_submitted = 0
+        self.cycles_in_execution = 0
 
 class Operation():
     def __init__(self, tran_id) -> None:
