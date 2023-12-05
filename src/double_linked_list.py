@@ -30,7 +30,7 @@ class DoublyLinkedList:
     def find_by_position(self, index):
         temp = self.head
         count = 0
-        while count < index is not None:
+        while count < index:
             temp = temp.next
             count += 1
         return temp
@@ -177,7 +177,7 @@ class DoublyLinkedList:
             elif temp.previous is None:
                 self.deleteFromBeginning()
             else:
-                temp.next = temp.previous.next
+                temp.previous.next = temp.next
                 temp.next.previous = temp.previous
                 temp.next = None
                 temp.previous = None
