@@ -46,6 +46,7 @@ class LockTable():
         tr_list = self.transactions[trid]
         tr_list.delete(data_id)
 
+    # insert in lock table
     def insert(self, data_id, trid, mode):
         hashed_data_id = hash(data_id)
         status = GRANTED
@@ -56,21 +57,18 @@ class LockTable():
         if hashed_data_id in self.table:
             # get doubly linked list of the data item with id data_id
             data_id_doubly_linked_list = self.table[hashed_data_id]
-            length = data_id_doubly_linked_list.length()
-
             # check for collisions
             is_data_item_locked, node = data_id_doubly_linked_list.search(data_id)
 
             # check the transactions list for that data item
             if is_data_item_locked:
                 transactions = node.arguments["transactions"]
-                data_item_node = transactions.find_by_position(length - 1)
-                data_item_trid = data_item_node.id
+                data_item_node = transactions.find_by_position(transactions.length() - 1)
                 data_item_mode = data_item_node.arguments["mode"]
                 data_item_status = data_item_node.arguments["status"]
 
                 # grant lock if it's compatible with the granted ones and the last transaction was granted the lock
-                if data_item_status == GRANTED and data_item_mode == SHARED and mode == SHARED:
+                if data_item_status == GRANTED and self.__is_compatible(data_item_mode, mode):
                     transactions.insertAtEnd(trid, mode=mode, status=GRANTED)
                 # block transaction in other case
                 else:
@@ -95,7 +93,6 @@ class LockTable():
         if trid not in self.transactions:
             print("Transaction id not in lock table.")
             return
-        
         # transactions locks list
         tr_list = self.transactions[trid]
         # for each lock, remove from the transaction lock list and the lock table
@@ -111,12 +108,39 @@ class LockTable():
     def __delete_data_item_lock(self, data_id, trid):
         # data item transaction lock request list in lock table
         data_item_tr_list = self.find_data_item_transactions_list(data_id)
+        # grant locks before deleting transaction from list
+        self.__grant_locks(trid, data_item_tr_list)
+
         data_item_tr_list.delete(trid)
         if data_item_tr_list.isEmpty():
             data_id_hash_list = self.table[hash(data_id)]
             data_id_hash_list.delete(data_id)
             if data_id_hash_list.isEmpty():
-                self.table.pop(data_id)
+                self.table.pop(hash(data_id))
+
+    def __is_compatible(self, m1, m2):
+        return (m1 == "S" and m2 == "S")
+
+    def __grant_locks(self, trid, data_item_tr_list):
+        _, temp = data_item_tr_list.search(trid)
+        temp = temp.next
+
+        if temp != None and temp.previous == None:
+            temp.arguments["status"] = GRANTED
+            temp = temp.next
+
+        while temp != None:
+            m1 = temp.previous.arguments["mode"]
+            m2 = temp.arguments["mode"]
+
+            if self.__is_compatible(m1, m2):
+                temp.arguments["status"] = GRANTED
+            else:
+                break
+
+    def delete_data_item_lock(self, trid, data_id):
+        self.__delete_data_item_lock(trid, data_id)
+        self.__remove_from_transactions(trid, data_id)
 
     # find the status of a transaction
     def find_transaction_status(self, trid, data_id):
@@ -148,17 +172,25 @@ x.insert(30, 0, "X")
 # print("------")
 x.insert(30, 1, "X")
 # print("------")
-x.insert(29, 1, "X")
+x.insert(29, 1, "S")
+x.insert(29, 2, "S")
+x.insert(29, 3, "X")
 # print(x)
 # print("Transactions++++++++++")
 # print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
-# print("Delete testing++++++")
-# x.delete_transaction(1)
-# print("Transactions>>>>>")
-# # print(x.transactions)
-# print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
-# print("Lock table>>>>>")
-# print(x)
-print("Transaction status>>>>>>")
-print(x.find_transaction_status(1, 29))
-print(x.find_transaction_status(1, 30))
+
+print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
+print("-----------------------------------------------------------")
+print("Delete testing++++++")
+x.delete_transaction(0)
+x.delete_transaction(2)
+print("-----------------------------------------------------------")
+print("Transactions>>>>>")
+print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
+print("-----------------------------------------------------------")
+print("Lock table>>>>>")
+print(x)
+
+# print("Transaction status>>>>>>")
+# print(x.find_transaction_status(1, 29))
+# print(x.find_transaction_status(1, 30))
