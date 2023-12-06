@@ -45,7 +45,7 @@ class LogManager():
             fp.close()
         with open(log_path) as fp:
             if os.path.getsize(log_path):
-                records = [self.parser.parse(lr) for lr in fp.read().split('\n')]
+                records = [self.parser.parse(lr) for lr in fp.read().split('\n') if lr != ""]
             fp.close()
 
         return records
@@ -92,12 +92,13 @@ class CommitRecord(LogRecord):
         return str(self.id) + ",C"
     
 class CompensationLogRecord(LogRecord):
-    def __init__(self, id_, val) -> None:
+    def __init__(self, id_, data_id, val) -> None:
         super().__init__(id_)
+        self.data_id = data_id
         self.value = val
 
     def __str__(self) -> str:
-        return f"{self.id},{self.value},CLR"
+        return f"{self.id},{self.data_id},{self.value},CLR"
     
 class LogParser:
     def __init__(self) -> None:
@@ -115,8 +116,9 @@ class LogParser:
         if log_type == "R":
             return RollbackRecord(id_)
         if log_type == "CLR":
-            value = args[1]
-            return CompensationLogRecord(id_, value)
+            data_id = int(args[1])
+            value = int(args[2])
+            return CompensationLogRecord(id_, data_id, value)
         if log_type == "F":
             data_id = int(args[1])
             old_value = int(args[2])

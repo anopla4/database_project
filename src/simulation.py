@@ -149,24 +149,25 @@ class Simulation():
                 transaction  = self.transactions[trid]
                 state = transaction.state
 
-                # terminate transaction that reached the maximum number of operations
-                if transaction.operations_submitted == self.transaction_size:
-                    print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
-                    self.perform_commit(trid)
-                    transaction.state = TERMINATED
-                    continue
-
-                # rollback transaction in deadlock
-                if transaction.cycles_in_execution == self.timeout:
-                    print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
-                    self.perform_rollback(trid)
-                    transaction.state = TERMINATED
-                    continue
-                
-                # increase number of cycles the transaction has been executing
-                transaction.cycles_in_execution += 1
-                
                 if state == ACTIVE:
+                    # terminate transaction that reached the maximum number of operations
+                    if transaction.operations_submitted == self.transaction_size:
+                        print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
+                        self.perform_commit(trid)
+                        transaction.state = TERMINATED
+                        continue
+
+                    # rollback transaction in deadlock
+                    if transaction.cycles_in_execution == self.timeout:
+                        print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
+                        self.perform_rollback(trid)
+                        transaction.state = TERMINATED
+                        continue
+                    
+                    # increase number of cycles the transaction has been executing
+                    transaction.cycles_in_execution += 1
+                
+                    # submit operation
                     op, data_id, old_value = self.get_operation()
                     print(f"SUBMIT OPERATION: trid: {trid}, data item: {data_id}+++++++++++++++")
                     # try to perform operation: read, write or rollback
@@ -175,6 +176,7 @@ class Simulation():
                     transaction.operations_submitted += 1
 
                     # update database every 25 write operations (first cycle ignored since database was just read)
+                    # TODO: change to 25
                     if self.write_operations > 0 and self.write_operations % 1 == 0:
                         print(f"UPDATE DATABASE: number of operations submitted {self.write_operations}+++++++++++++++")
                         self.log_manager.write_to_disk()

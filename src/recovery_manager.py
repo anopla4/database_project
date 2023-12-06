@@ -16,7 +16,7 @@ class RecoveryManager():
                     data_id = log.data_id
                     old_value = log.old_value
                     data[data_id] = old_value
-                    log_manager.add_record(CompensationLogRecord(trid, old_value))
+                    log_manager.add_record(CompensationLogRecord(trid, data_id, old_value))
 
             i -= 1
 
@@ -40,7 +40,7 @@ class RecoveryManager():
                     data_id = log_record.data_id
                     old_value = log_record.old_value
                     data[data_id] = old_value
-                    log_manager.add_record(CompensationLogRecord(id_, old_value))
+                    log_manager.add_record(CompensationLogRecord(id_, data_id, old_value))
 
             i -= 1
 
