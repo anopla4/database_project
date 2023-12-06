@@ -1,4 +1,4 @@
-from lock_table import LockTable, EXCLUSIVE, BLOCKED
+from lock_table import LockTable, EXCLUSIVE, BLOCKED, SHARED
 class LockManager():
     def __init__(self) -> None:
         self.lock_table = LockTable()
@@ -15,6 +15,9 @@ class LockManager():
         self.lock_table.delete_data_item_lock(trid, data_id)
 
     def is_blocked(self, trid, data_id):
+        if data_id == None:
+            data_id = self.lock_table.transactions[trid].head.id
+        print(data_id)
         return self.lock_table.find_transaction_status(trid, data_id) == BLOCKED
 
 if __name__ == "__main__":

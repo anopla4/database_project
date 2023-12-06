@@ -20,6 +20,8 @@ if __name__ == "__main__":
             print(e)
     # read arguments from command line 
     else:
+        if len(sys.argv) < 7:
+            raise Exception("There are some arguments missing, you should provide: <cycles> <transaction_size> <start_prob> <write_prob> <rollback_prop> <timeout>.")
         cycles = sys.argvs[1]
         transaction_size = sys.argvs[2]
         start_prob = sys.argvs[3]

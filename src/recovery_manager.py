@@ -24,13 +24,11 @@ class RecoveryManager():
     def recover(self, data, log_manager):
         records = log_manager.log_records
         active_transactions = self.redo(data, records)
-        self.undo(data, records, active_transactions)
-        log_manager.empty_log()
+        self.undo(data, records, log_manager, active_transactions)
         log_manager.flush_records()
 
-    def undo(self, data, log_manager, active_transactions):
-        i = 0
-        logs = log_manager.log_records
+    def undo(self, data, logs, log_manager, active_transactions):
+        i = len(logs) - 1
         while i >= 0 and len(active_transactions):
             log_record = logs[i]
             id_ = log_record.id
