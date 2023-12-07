@@ -49,7 +49,7 @@ class LockTable():
     # remove transaction lock request from transactions list
     def __remove_from_transactions(self, trid, data_id):
         if trid not in self.transactions:
-            print("Transaction id not in lock table.")
+            print("No locks to be released. Transaction id not in lock table.")
             return
         tr_list = self.transactions[trid]
         tr_list.delete(data_id)
@@ -171,7 +171,7 @@ class LockTable():
     # delete all lock requests of a transaction from the  transactions list and the lock table
     def delete_transaction(self, trid):
         if trid not in self.transactions:
-            print("Transaction id not in lock table.")
+            print("No locks to be released. Transaction id not in lock table.")
             return
         # transactions locks list
         tr_list = self.transactions[trid]

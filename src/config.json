@@ -6,5 +6,6 @@
     "rollback_prob": 0.8,
     "timeout": 1,
     "db_loc": "src\\db",
-    "log_loc": "src\\log"
+    "log_loc": "src\\log",
+    "testing": true
 }
