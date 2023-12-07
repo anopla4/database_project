@@ -1,9 +1,9 @@
 {
-    "cycles": 4,
-    "transaction_size": 2,
+    "cycles": 32,
+    "transaction_size": 1,
     "start_prob": 1,
-    "write_prob": 1,
-    "rollback_prob": 0,
+    "write_prob": 0.1,
+    "rollback_prob": 0.8,
     "timeout": 1,
     "db_loc": "src\\db",
     "log_loc": "src\\log"

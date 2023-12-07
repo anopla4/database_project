@@ -17,7 +17,6 @@ class LockManager():
     def is_blocked(self, trid, data_id):
         if data_id == None:
             data_id = self.lock_table.transactions[trid].head.id
-        print(data_id)
         return self.lock_table.find_transaction_status(trid, data_id) == BLOCKED
 
 if __name__ == "__main__":

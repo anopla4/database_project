@@ -100,6 +100,7 @@ class Simulation():
     def perform_rollback(self, trid):
         self.recovery_manager.rollback_transaction(self.data, self.log_manager, trid)
         self.log_manager.add_record(RollbackRecord(trid))
+        self.transactions[trid].state = TERMINATED
 
         self.log_manager.write_to_disk()
         self.log_manager.flush_records()
@@ -150,19 +151,7 @@ class Simulation():
                 state = transaction.state
 
                 if state == ACTIVE:
-                    # terminate transaction that reached the maximum number of operations
-                    if transaction.operations_submitted == self.transaction_size:
-                        print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
-                        self.perform_commit(trid)
-                        transaction.state = TERMINATED
-                        continue
 
-                    # rollback transaction in deadlock
-                    if transaction.cycles_in_execution == self.timeout:
-                        print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
-                        self.perform_rollback(trid)
-                        transaction.state = TERMINATED
-                        continue
                     
                     # increase number of cycles the transaction has been executing
                     transaction.cycles_in_execution += 1
@@ -174,14 +163,29 @@ class Simulation():
                     self.perform_operation(op, data_id, trid, old_value)
                     # increase number of transaction submitted operations
                     transaction.operations_submitted += 1
-
+                    
                     # update database every 25 write operations (first cycle ignored since database was just read)
                     # TODO: change to 25
                     if self.write_operations > 0 and self.write_operations % 1 == 0:
                         print(f"UPDATE DATABASE: number of operations submitted {self.write_operations}+++++++++++++++")
+
                         self.log_manager.write_to_disk()
                         self.log_manager.flush_records()
                         self.update_data()
+                    
+                    # terminate transaction that reached the maximum number of operations
+                    if transaction.state != TERMINATED and transaction.operations_submitted == self.transaction_size:
+                        print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
+                        self.perform_commit(trid)
+                        transaction.state = TERMINATED
+                        continue
+
+                    # rollback transaction in deadlock
+                    if transaction.state != TERMINATED and transaction.cycles_in_execution == self.timeout:
+                        print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
+                        self.perform_rollback(trid)
+                        transaction.state = TERMINATED
+                        continue
 
             print(f"UNBLOCK TRANSACTIONS+++++++++++++++")
             # unblock transactions

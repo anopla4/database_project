@@ -22,12 +22,12 @@ if __name__ == "__main__":
     else:
         if len(sys.argv) < 7:
             raise Exception("There are some arguments missing, you should provide: <cycles> <transaction_size> <start_prob> <write_prob> <rollback_prop> <timeout>.")
-        cycles = sys.argvs[1]
-        transaction_size = sys.argvs[2]
-        start_prob = sys.argvs[3]
-        write_prob = sys.argvs[4]
-        rollback_prob = sys.argvs[5]
-        timeout = sys.argvs[6]
+        cycles = int(sys.argv[1])
+        transaction_size = int(sys.argv[2])
+        start_prob = float(sys.argv[3])
+        write_prob = float(sys.argv[4])
+        rollback_prob = float(sys.argv[5])
+        timeout = int(sys.argv[6])
 
     # start simulation
     simulation = Simulation(cycles, transaction_size, start_prob, write_prob, rollback_prob, timeout)

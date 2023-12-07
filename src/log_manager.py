@@ -17,6 +17,8 @@ class LogManager():
             fp.close()
 
     def write_to_disk(self):
+        if not len(self.log_records):
+            return
         log_path = ""
         with open("src\config.json") as fp:
             log_path = json.load(fp)["log_loc"]
