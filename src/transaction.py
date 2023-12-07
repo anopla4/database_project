@@ -6,7 +6,7 @@ class Transaction():
         self.id = id_
         self.state = ACTIVE
         self.operations_submitted = 0
-        self.cycles_in_execution = 0
+        self.cycles_blocked = 0
 
 class Operation():
     def __init__(self, tran_id) -> None:

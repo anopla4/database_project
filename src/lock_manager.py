@@ -18,30 +18,3 @@ class LockManager():
         if data_id == None:
             data_id = self.lock_table.transactions[trid].head.id
         return self.lock_table.find_transaction_status(trid, data_id) == BLOCKED
-
-if __name__ == "__main__":
-    x = LockManager()
-    x.request_lock(30, 0)
-    x.request_lock(30, 1)
-    x.request_lock(29, 1, mode="S")
-    x.request_lock(29, 2, mode="S")
-    x.request_lock(29, 3)
-
-
-    print("-----------------------------------------------------------")
-    print(x.lock_table)
-    print("-----------------------------------------------------------")
-
-    print("Unlock data item++++++")
-    x.unlock_data_item(30, 0)
-
-    print("-----------------------------------------------------------")
-    print(x.lock_table)
-    print("-----------------------------------------------------------")
-    
-    print("Release locks++++++")
-    x.release_locks(2)
-
-    print("-----------------------------------------------------------")
-    print(x.lock_table)
-    print("-----------------------------------------------------------")

@@ -107,7 +107,7 @@ class LogParser:
         pass
 
     def parse(self, log_record):
-        args = log_record.split(",")
+        args = log_record.replace(" ", "").split(",")
         log_type = args[-1]
         id_ = int(args[0])
 

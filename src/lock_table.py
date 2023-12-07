@@ -259,31 +259,3 @@ class LockTable():
             text += f"{data_id}:\n   {str(self.table[hash(data_id)])}\n"
 
         return text
-
-if __name__ == "__main__":
-
-    x = LockTable()
-    x.insert(30, 0, "S")
-    # print("------")
-    x.insert(30, 1, "S")
-    # print("------")
-    x.insert(30, 1, "S")
-    # x.insert(30, 2, "S")
-    # x.insert(29, 3, "X")
-    print(x)
-    print("Transactions++++++++++")
-    print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
-    print("-----------------------------------------------------------")
-    print("Delete testing++++++")
-    x.delete_transaction(0)
-    # x.delete_transaction(2)
-    print("-----------------------------------------------------------")
-    print("Transactions>>>>>")
-    print("\n-----\n".join([f'{tr}: {str(x.transactions[tr])}' for tr in x.transactions]))
-    print("-----------------------------------------------------------")
-    print("Lock table>>>>>")
-    print(x)
-
-    # print("Transaction status>>>>>>")
-    # print(x.find_transaction_status(1, 29))
-    # print(x.find_transaction_status(1, 30))

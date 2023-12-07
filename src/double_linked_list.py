@@ -202,24 +202,3 @@ class DoublyLinkedList:
                 temp.next.previous = temp.previous
                 temp.next = None
                 temp.previous = None
-
-
-# x = DoublyLinkedList()
-# print(x.isEmpty())
-# x.insertAtBeginning(0, mode="X", status="granted")
-# print("0--------")
-# print(x)
-# x.insertAtEnd(1, mode="S", status="blocked")
-# print("0, 1--------")
-# print(x)
-# x.deleteFromLast()
-# print("0--------")
-# print(x)
-# x.insertAtEnd(2, mode="S", status="blocked")
-# print("0, 2--------")
-# print(x)
-# x.deleteFromLast()
-# x.deleteFromBeginning()
-# x.insertAtEnd(3, mode="X", status="granted")
-# print("3--------")
-# print(x)

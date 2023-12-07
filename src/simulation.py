@@ -58,10 +58,12 @@ class Simulation():
         if var <= 1:
             data_id = randint(0, 31)
             old_value = self.data[data_id]
+
             return var, data_id, old_value
         return var, None, None
     
     def get_record(self, op, trid, data_id, old_value):
+
         return OperationRecord(trid, data_id, old_value, old_value ^ 1) if op == 1 else RollbackRecord(trid)
     
     def load_data(self):
@@ -156,13 +158,10 @@ class Simulation():
             for trid in self.transactions:
                 transaction  = self.transactions[trid]
                 state = transaction.state
-
+                if state == BLOCKED:
+                    # increase number of cycles the transaction has been blocked
+                    transaction.cycles_blocked += 1
                 if state == ACTIVE:
-
-                    
-                    # increase number of cycles the transaction has been executing
-                    transaction.cycles_in_execution += 1
-                
                     # submit operation
                     op, data_id, old_value = self.get_operation()
                     if self.testing:
@@ -172,9 +171,13 @@ class Simulation():
                     # increase number of transaction submitted operations
                     transaction.operations_submitted += 1
                     
+                    # if transaction gets blocked
+                    if transaction.state == BLOCKED:
+                        # increase number of cycles the transaction has been blocked
+                        transaction.cycles_blocked += 1
+
                     # update database every 25 write operations (first cycle ignored since database was just read)
-                    # TODO: change to 25
-                    if self.write_operations > 0 and self.write_operations % 1 == 0:
+                    if self.write_operations > 0 and self.write_operations % 25 == 0:
                         if self.testing:
                             print(f"UPDATE DATABASE: number of operations submitted {self.write_operations}+++++++++++++++")
 
@@ -182,21 +185,23 @@ class Simulation():
                         self.log_manager.flush_records()
                         self.update_data()
                     
-                    # terminate transaction that reached the maximum number of operations
-                    if transaction.state != TERMINATED and transaction.operations_submitted == self.transaction_size:
-                        if self.testing:
-                            print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
-                        self.perform_commit(trid)
-                        transaction.state = TERMINATED
-                        continue
+                # terminate transaction that reached the maximum number of operations
+                if transaction.state != TERMINATED and transaction.operations_submitted == self.transaction_size:
+                    if self.testing:
+                        print(f"TERMINATE TRANSACTION {trid}+++++++++++++++")
+                    self.perform_commit(trid)
+                    transaction.state = TERMINATED
+                    continue
 
-                    # rollback transaction in deadlock
-                    if transaction.state != TERMINATED and transaction.cycles_in_execution == self.timeout:
-                        if self.testing:
-                            print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
-                        self.perform_rollback(trid)
-                        transaction.state = TERMINATED
-                        continue
+                # rollback transaction in deadlock
+                if transaction.state != TERMINATED and transaction.cycles_blocked == self.timeout:
+                    if self.testing:
+                        print(f"ROLLBACK TRANSACTION {trid}+++++++++++++++")
+                    self.perform_rollback(trid)
+                    transaction.state = TERMINATED
+                    continue
+                
+
             if self.testing:
                 print(f"UNBLOCK TRANSACTIONS+++++++++++++++")
             # unblock transactions
@@ -206,6 +211,7 @@ class Simulation():
                     if self.testing:
                         print(f"UNBLOCKING TRANSACTION {trid}+++++++++++++++")
                     transaction.state = ACTIVE
+                    transaction.cycles_blocked = 0
 
             i += 1
 

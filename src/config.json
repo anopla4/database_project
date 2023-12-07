@@ -1,11 +1,11 @@
 {
-    "cycles": 32,
-    "transaction_size": 1,
-    "start_prob": 1,
-    "write_prob": 0.1,
-    "rollback_prob": 0.8,
-    "timeout": 1,
+    "cycles": 50,
+    "transaction_size": 5,
+    "start_prob": 0.6,
+    "write_prob": 0.5,
+    "rollback_prob": 0.4,
+    "timeout": 2,
     "db_loc": "src\\db",
     "log_loc": "src\\log",
-    "testing": true
+    "testing": false
 }
