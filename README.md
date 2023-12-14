@@ -5,19 +5,17 @@
 You can run the simulation using one of the following alternatives:
 
   - **Config file**: You can change the simulation parameters in the config.json file provided in the solution, and then run the following command:
-    
-    `python src//main.py`
-    
+    `python src//main.py`   
 If you want to enable testing comments, you can change the *testing* field in the config.json file.
-
+If you want to force the commit of the transactions at the end of the simulation, you can change the *force_commit* field in the config.json file.
   - **Command line arguments**: You can provide the simulation parameters as command line arguments and run the following command:
-
     `python src//main.py <cycles> <transaction_size> <start_prob> <write_prob> <rollback_prop> <timeout>`
-
 If you want to enable testing comments, you can run the following command:
-
     `python src//main.py <cycles> <transaction_size> <start_prob> <write_prob> <rollback_prop> <timeout> test`
-    
+If you want to force the commit of the transactions at the end of the simulation, you can run the following command:
+
+    `python src//main.py <cycles> <transaction_size> <start_prob> <write_prob> <rollback_prop> <timeout> force_commit`
+
 ## Overview
 
 ### Simulation flow
