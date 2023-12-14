@@ -15,6 +15,10 @@ class LockManager():
         self.lock_table.delete_data_item_lock(trid, data_id)
 
     def is_blocked(self, trid, data_id):
-        if data_id == None:
-            data_id = self.lock_table.transactions[trid].head.id
-        return self.lock_table.find_transaction_status(trid, data_id) == BLOCKED
+        temp = self.lock_table.transactions[trid].head
+        while temp != None:
+            id_ = temp.id
+            if self.lock_table.find_transaction_status(trid, id_) == BLOCKED:
+                return True
+            temp = temp.next
+        return False

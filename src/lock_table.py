@@ -9,6 +9,7 @@ class LockTable():
     def __init__(self) -> None:
         self.table = {}
         self.transactions = {}
+        self.text = ""
 
     # add new transaction lock request to lock table
     def __add_new(self, data_id, trid, mode, status=BLOCKED):
@@ -26,7 +27,7 @@ class LockTable():
             # insert in the new lock table data item entry
             data_id_doubly_linked_list.insertAtBeginning(data_id, transactions=transactions)
         else:
-            data_item_tr_list.insertAtEnd(data_id, mode=mode, status=status)
+            data_item_tr_list.insertAtEnd(trid, mode=mode, status=status)
 
         return transactions.find_by_position(transactions.length() - 1)
         
@@ -80,6 +81,7 @@ class LockTable():
 
     # upgrade lock held by a transaction
     def upgrade_lock(self, trid, data_id, mode=EXCLUSIVE, is_transaction_holding_lock=False, number_of_granted_locks=0):
+        tr_node = None
         if is_transaction_holding_lock and number_of_granted_locks <= 1:
             _, tr_node = self.find_data_item_transactions_list(data_id).search(trid)
             tr_node.arguments["mode"] = EXCLUSIVE
@@ -89,15 +91,19 @@ class LockTable():
             # add corresponding element to the transactions list
             self.__add_to_transactions(trid, data_id, tr_node)
 
+        return tr_node
+
     # downgrade lock held by a transaction
     def downgrade_lock(self, trid, data_id):
         _, tr_node = self.find_data_item_transactions_list(data_id).search(trid)
         tr_node.arguments["mode"] = SHARED
         data_item_tr_list = self.find_data_item_transactions_list(data_id)
         self.__grant_locks(trid, data_item_tr_list)
+        return tr_node
 
     # insert in lock table
     def insert(self, data_id, trid, mode):
+        self.text += f"{trid} requests lock on {data_id} in mode {mode}\n"
         hashed_data_id = hash(data_id)
         status = GRANTED
         # transaction node in the data item transaction waiting list
@@ -115,6 +121,7 @@ class LockTable():
 
             # check the transactions list for that data item
             if is_data_item_locked:
+                self.text += f"{data_id} is_locked\n"
                 transactions = node.arguments["transactions"]
                 data_item_node = transactions.find_by_position(transactions.length() - 1)
                 data_item_mode = data_item_node.arguments["mode"]
@@ -128,31 +135,36 @@ class LockTable():
                 is_transaction_holding_lock = len(transaction_locks_list_for_data_id)
 
                 if did_transaction_requested_lock:
-                    transaction_lock = transaction_locks_list_for_data_id[0]
+                    self.text += f"{data_id} is locked by same trid {trid}\n"
+                    transaction_lock = transaction_locks_requested_list_for_data_id[0]
                     transaction_lock_mode = transaction_lock.arguments["mode"]
-
                     # requesting lock in the same mode
                     if transaction_lock_mode == mode:
-                        return transaction_lock
+                        return transaction_lock.arguments["status"] == GRANTED
 
                     # transaction wants to upgrade lock
                     if transaction_lock_mode == SHARED and mode == EXCLUSIVE:
-                        self.upgrade_lock(trid, data_id, mode=mode, is_transaction_holding_lock=is_transaction_holding_lock, number_of_granted_locks=number_of_granted_locks)
+                        self.text += f"Transaction holds lock in SHARED mode, wants to upgrade. There are {number_of_granted_locks} granted locks.\n"
+                        transaction_lock = self.upgrade_lock(trid, data_id, mode=mode, is_transaction_holding_lock=is_transaction_holding_lock, number_of_granted_locks=number_of_granted_locks)
                         
                     # transaction wants to downgrade lock
                     elif transaction_lock_mode == EXCLUSIVE and mode == SHARED:
-                        self.downgrade_lock(trid, data_id)
-                    return transaction_lock
+                        self.text += f"Transaction holds lock in EXCLUSIVE mode, wants to downgrade.\n"
+                        transaction_lock = self.downgrade_lock(trid, data_id)
+
+                    return transaction_lock.arguments["status"] == GRANTED
 
                 # grant lock if the last transaction was granted the lock and it's compatible with the granted ones or 
                 # is held by the same transaction but the mode is shared or the only transaction holding locks over the 
                 # data item is trid
                 elif data_item_status == GRANTED and self.__is_compatible(data_item_mode, mode):
-                        transactions.insertAtEnd(trid, mode=mode, status=GRANTED)
+                    self.text += f"lock requested by {trid} on {data_id} is compatible\n"
+                    transactions.insertAtEnd(trid, mode=mode, status=GRANTED)
 
                 # block transaction in other case
                 else:
                     status = BLOCKED
+                    self.text += f"lock requested by {trid} on {data_id} is not granted\n"
                     transactions.insertAtEnd(trid, mode=mode, status=BLOCKED)
                 tr_node = data_item_node.next
             # no collisions, new data_id
@@ -166,6 +178,7 @@ class LockTable():
         # add corresponding element to the transactions list
         self.__add_to_transactions(trid, data_id, tr_node)
 
+        self.text += f"{trid} {status}\n"
         return status == GRANTED
 
     # delete all lock requests of a transaction from the  transactions list and the lock table
@@ -203,7 +216,9 @@ class LockTable():
 
     # grant locks after modifying lock requested by another transaction
     def __grant_locks(self, trid, data_item_tr_list):
-        _, temp = data_item_tr_list.search(trid)
+        found, temp = data_item_tr_list.search(trid)
+        if not found:
+            return
         temp = temp.next
 
         # There is another lock requested 

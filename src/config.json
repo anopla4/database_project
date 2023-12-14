@@ -1,10 +1,10 @@
 {
-    "cycles": 50,
-    "transaction_size": 10,
-    "start_prob": 0.6,
+    "cycles": 1000,
+    "transaction_size": 3,
+    "start_prob": 1,
     "write_prob": 0.5,
-    "rollback_prob": 0.4,
-    "timeout": 2,
+    "rollback_prob": 0,
+    "timeout": 10,
     "db_loc": "src\\db",
     "log_loc": "src\\log.csv",
     "testing": false

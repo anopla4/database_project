@@ -5,9 +5,10 @@ from log_manager import LogManager, StartRecord, OperationRecord, RollbackRecord
 from recovery_manager import RecoveryManager
 from lock_manager import LockManager, SHARED
 import json
+from tqdm import tqdm
 
 class Simulation():
-    def __init__(self, cycles, transaction_size, start_prob, write_prob, rollback_prob, timeout, testing=False) -> None:
+    def __init__(self, cycles, transaction_size, start_prob, write_prob, rollback_prob, timeout, testing=False, force_commit=False) -> None:
         # maximum number of cycles for the simulation
         self.cycles = cycles
         # size of the transactions in number of operations
@@ -40,9 +41,11 @@ class Simulation():
         self.data = []
         # number of write operations
         self.write_operations = 0
-
+        self.data_test = {}
         # testing mode
         self.testing = testing
+        # force commit
+        self.force_commit = force_commit
 
     def validate_args(self):
         if self.write_prob + self.rollback_prob > 1:
@@ -90,10 +93,14 @@ class Simulation():
         is_lock_granted = self.lock_manager.request_lock(data_id, trid)
 
         if is_lock_granted:
+            if data_id not in self.data_test:
+                self.data_test[data_id] = []
             if self.testing:
                 print(f"WRITE UPDATE LOG RECORD+++++++++++++++")
             # write log record
-            self.log_manager.add_record(self.get_record(1, trid, data_id, old_value))
+            r = self.get_record(1, trid, data_id, old_value)
+            self.log_manager.add_record(r)
+            self.data_test[data_id].append((trid, str(r)))
             self.data[data_id] ^= 1
         else:
             self.transactions[trid].state = BLOCKED
@@ -115,6 +122,7 @@ class Simulation():
         self.lock_manager.release_locks(trid)
 
     def perform_commit(self, trid):
+        self.lock_manager.lock_table.text += f"{trid} commits\n"
         self.log_manager.add_record(CommitRecord(trid))
 
         self.log_manager.write_to_disk()
@@ -133,15 +141,25 @@ class Simulation():
         else:
             self.perform_rollback(trid)
 
+    def __force_commit(self):
+        for i in self.transactions:
+            if self.transactions[i].state != TERMINATED:
+                if self.testing:
+                    print(f"TERMINATE TRANSACTION {i}+++++++++++++++")
+                self.perform_commit(i)
+                self.transactions[i].state = TERMINATED
+        self.update_data()
+
     def start(self):
         i = 0
         self.load_data()
         self.log_manager.read_from_disk()
         self.recovery_manager.recover(self.data, self.log_manager)
         self.update_data()
+        self.log_manager.flush_records()
         self.log_manager.empty_log()
 
-        while i < self.cycles:
+        for _ in tqdm(range(self.cycles)):
             # start transaction
             if self.start_transaction():
                 id_ = len(self.transactions)
@@ -209,9 +227,10 @@ class Simulation():
                 transaction  = self.transactions[trid]
                 if transaction.state == BLOCKED and not self.lock_manager.is_blocked(trid, None):
                     if self.testing:
-                        print(f"UNBLOCKING TRANSACTION {trid}+++++++++++++++")
+                        print(f"UNBLOCKING TRANSACTION {trid}+++++++++++++++\n")
+                    self.lock_manager.lock_table.text += f"UNBLOCKING TRANSACTION {trid}+++++++++++++++\n"
                     transaction.state = ACTIVE
                     transaction.cycles_blocked = 0
 
-            i += 1
-
+        if self.force_commit:
+            self.__force_commit()

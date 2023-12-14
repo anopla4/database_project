@@ -50,10 +50,13 @@ class RecoveryManager():
 
     def redo(self, data, logs):
         active_transactions = []
+        clrs = 0
         for log_record in logs:
             id_ = log_record.id
             # redo write operation and compensation logs
             if isinstance(log_record, OperationRecord) or isinstance(log_record, CompensationLogRecord):
+                if isinstance(log_record, CompensationLogRecord):
+                    clrs +=1
                 data_id = log_record.data_id
                 val = log_record.value
                 data[data_id] = val
@@ -63,5 +66,4 @@ class RecoveryManager():
             # if a transaction commits or rolls back, remove it from the list of active transactions
             elif isinstance(log_record, CommitRecord) or isinstance(log_record, RollbackRecord):
                 active_transactions.remove(id_)
-
         return active_transactions

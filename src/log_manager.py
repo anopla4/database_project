@@ -4,8 +4,12 @@ class LogManager():
     def __init__(self) -> None:
         self.log_records = []
         self.parser = LogParser()
+        self.logs = 0
+        self.all_records = []
 
     def add_record(self, log_record):
+        self.logs += 1
+        self.all_records.append(log_record)
         self.log_records.append(log_record)
 
     def empty_log(self):
@@ -22,6 +26,7 @@ class LogManager():
         log_path = ""
         with open("src\config.json") as fp:
             log_path = json.load(fp)["log_loc"]
+
         log_text = "\n".join([str(lr) for lr in self.log_records])
         with open(log_path, 'a') as fp:
             log_text = log_text if os.path.getsize(log_path) else log_text
